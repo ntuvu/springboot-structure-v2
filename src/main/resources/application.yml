@@ -1,11 +1,5 @@
 spring:
   application:
     name: springboot-structure-ver2
-
-open:
-  api:
-    title: API document
-    version: v1.0.0
-    description: Description
-    serverUrl: http://localhost:8080
-    serverName: server test
+  profiles:
+    active: '@spring.profiles.active@'
