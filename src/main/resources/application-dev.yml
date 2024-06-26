@@ -6,8 +6,8 @@ spring:
       on-profile: dev
 open:
   api:
-    title: API document
+    title: ${TITLE:DUMMY-API-TITLE}
     version: v1.0.0
     description: Description
     serverUrl: http://localhost:${server.port}
-    serverName: server test
+    serverName: server dev
