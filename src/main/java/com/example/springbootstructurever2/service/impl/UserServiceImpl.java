@@ -2,6 +2,7 @@ package com.example.springbootstructurever2.service.impl;
 
 import com.example.springbootstructurever2.dto.request.AddressDTO;
 import com.example.springbootstructurever2.dto.request.UserRequestDTO;
+import com.example.springbootstructurever2.dto.response.PageResponse;
 import com.example.springbootstructurever2.dto.response.UserDetailResponse;
 import com.example.springbootstructurever2.enums.UserStatus;
 import com.example.springbootstructurever2.enums.UserType;
@@ -10,13 +11,24 @@ import com.example.springbootstructurever2.model.Address;
 import com.example.springbootstructurever2.model.User;
 import com.example.springbootstructurever2.repository.UserRepository;
 import com.example.springbootstructurever2.service.UserService;
+import com.example.springbootstructurever2.util.AppConst;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.example.springbootstructurever2.util.AppConst.SORT_BY;
 
 @Service
 @Slf4j
@@ -97,7 +109,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDetailResponse getUser(long userId) {
-        User user = getUserById(userId);
+        User user = this.getUserById(userId);
         return UserDetailResponse.builder()
                 .id(userId)
                 .firstName(user.getFirstName())
@@ -108,8 +120,64 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserDetailResponse> getAllUsers(int pageNo, int pageSize) {
-        return List.of();
+    public PageResponse<?> getAllUsersWithSortBy(int pageNo, int pageSize, String sortBy) {
+        int page = 0;
+        if (pageNo > 0) {
+            page = pageNo - 1;
+        }
+
+        List<Sort.Order> sorts = new ArrayList<>();
+
+        if (StringUtils.hasLength(sortBy)) {
+            // firstName:asc|desc
+            Pattern pattern = Pattern.compile(SORT_BY);
+            Matcher matcher = pattern.matcher(sortBy);
+            if (matcher.find()) {
+                if (matcher.group(3).equalsIgnoreCase("asc")) {
+                    sorts.add(new Sort.Order(Sort.Direction.ASC, matcher.group(1)));
+                } else {
+                    sorts.add(new Sort.Order(Sort.Direction.DESC, matcher.group(1)));
+                }
+            }
+        }
+
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by(sorts));
+
+        Page<User> users = userRepository.findAll(pageable);
+
+        return this.convertToPageResponse(users, pageable);
+    }
+
+    @Override
+    public PageResponse<?> getAllUsersWithSortByMultipleColumns(int pageNo, int pageSize, String... sorts) {
+        int page = 0;
+        if (pageNo > 0) {
+            page = pageNo - 1;
+        }
+
+        List<Sort.Order> orders = new ArrayList<>();
+
+        if (sorts != null) {
+            for (String sortBy : sorts) {
+                log.info("sortBy: {}", sortBy);
+                // firstName:asc|desc
+                Pattern pattern = Pattern.compile(SORT_BY);
+                Matcher matcher = pattern.matcher(sortBy);
+                if (matcher.find()) {
+                    if (matcher.group(3).equalsIgnoreCase("asc")) {
+                        orders.add(new Sort.Order(Sort.Direction.ASC, matcher.group(1)));
+                    } else {
+                        orders.add(new Sort.Order(Sort.Direction.DESC, matcher.group(1)));
+                    }
+                }
+            }
+        }
+
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by(orders));
+
+        Page<User> users = userRepository.findAll(pageable);
+
+        return this.convertToPageResponse(users, pageable);
     }
 
     /**
@@ -143,5 +211,29 @@ public class UserServiceImpl implements UserService {
                         .build())
         );
         return result;
+    }
+
+    /**
+     * Convert Page<User> to PageResponse
+     *
+     * @param users
+     * @param pageable
+     * @return
+     */
+    private PageResponse<?> convertToPageResponse(Page<User> users, Pageable pageable) {
+        List<UserDetailResponse> response = users.stream().map(user -> UserDetailResponse.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .build()).toList();
+
+        return PageResponse.builder()
+                .page(pageable.getPageNumber() + 1)
+                .size(pageable.getPageSize())
+                .total(users.getTotalPages())
+                .items(response)
+                .build();
     }
 }

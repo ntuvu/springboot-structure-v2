@@ -4,6 +4,9 @@ import com.example.springbootstructurever2.configuration.Translator;
 import com.example.springbootstructurever2.dto.request.UserRequestDTO;
 import com.example.springbootstructurever2.dto.response.ResponseData;
 import com.example.springbootstructurever2.dto.response.ResponseError;
+import com.example.springbootstructurever2.dto.response.UserDetailResponse;
+import com.example.springbootstructurever2.enums.UserStatus;
+import com.example.springbootstructurever2.exception.ResourceNotFoundException;
 import com.example.springbootstructurever2.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,8 +16,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/users")
@@ -39,40 +40,78 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Update user", description = "Send a request via this API to update user")
     @PutMapping("/{userId}")
-    public ResponseData<?> updateUser(@PathVariable int userId, @RequestBody UserRequestDTO request) {
-        log.info("User updated with id {}", userId);
-        return new ResponseData<>(HttpStatus.ACCEPTED.value(), "User updated");
+    public ResponseData<?> updateUser(@PathVariable @Min(1) long userId, @Valid @RequestBody UserRequestDTO user) {
+        log.info("Request update userId={}", userId);
+
+        try {
+            userService.updateUser(userId, user);
+            return new ResponseData<>(HttpStatus.ACCEPTED.value(), Translator.toLocale("user.upd.success"));
+        } catch (Exception e) {
+            log.error("errorMessage={}", e.getMessage(), e.getCause());
+            return new ResponseError(HttpStatus.BAD_REQUEST.value(), "Update user fail");
+        }
     }
 
+    @Operation(summary = "Change status of user", description = "Send a request via this API to change status of user")
     @PatchMapping("/{userId}")
-    public ResponseData<?> changeStatus(@PathVariable @Min(1) int userId, @RequestParam boolean status) {
-        log.info("User status updated with id {}", userId);
-        return new ResponseData<>(HttpStatus.ACCEPTED.value(), "User status changed");
+    public ResponseData<?> updateStatus(@Min(1) @PathVariable int userId, @RequestParam UserStatus status) {
+        log.info("Request change status, userId={}", userId);
+
+        try {
+            userService.changeStatus(userId, status);
+            return new ResponseData<>(HttpStatus.ACCEPTED.value(), Translator.toLocale("user.change.success"));
+        } catch (Exception e) {
+            log.error("errorMessage={}", e.getMessage(), e.getCause());
+            return new ResponseError(HttpStatus.BAD_REQUEST.value(), "Change status fail");
+        }
     }
 
+    @Operation(summary = "Delete user permanently", description = "Send a request via this API to delete user permanently")
     @DeleteMapping("/{userId}")
-    public ResponseData<?> deleteUser(@PathVariable int userId) {
-        log.info("User with id {} deleted", userId);
-        return new ResponseData<>(HttpStatus.NO_CONTENT.value(), "User deleted");
+    public ResponseData<?> deleteUser(@PathVariable @Min(value = 1, message = "userId must be greater than 0") int userId) {
+        log.info("Request delete userId={}", userId);
+
+        try {
+            userService.deleteUser(userId);
+            return new ResponseData<>(HttpStatus.NO_CONTENT.value(), Translator.toLocale("user.del.success"));
+        } catch (Exception e) {
+            log.error("errorMessage={}", e.getMessage(), e.getCause());
+            return new ResponseError(HttpStatus.BAD_REQUEST.value(), "Delete user fail");
+        }
     }
 
+    @Operation(summary = "Get user detail", description = "Send a request via this API to get user information")
     @GetMapping("/{userId}")
-    public ResponseData<UserRequestDTO> getUser(@PathVariable int userId) {
-        return new ResponseData<>(HttpStatus.OK.value(), "user detail", null);
+    public ResponseData<UserDetailResponse> getUser(@PathVariable @Min(1) long userId) {
+        log.info("Request get user detail, userId={}", userId);
+        try {
+            return new ResponseData<>(HttpStatus.OK.value(), "user", userService.getUser(userId));
+        } catch (ResourceNotFoundException e) {
+            log.error("errorMessage={}", e.getMessage(), e.getCause());
+            return new ResponseError(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+        }
     }
 
-    @GetMapping
-    public ResponseData<List<UserRequestDTO>> getAllUsers(@RequestParam(defaultValue = "0") int pageNo, @RequestParam(defaultValue = "10") int pageSize, @RequestParam(required = false) String email) {
-        return new ResponseData<>(HttpStatus.OK.value(), "user detail", null);
+    @Operation(
+            summary = "Get list of users per pageNo",
+            description = "Send a request via this API to get user list by pageNo and pageSize")
+    @GetMapping("/list")
+    public ResponseData<?> getAllUsers(@RequestParam(defaultValue = "0", required = false) int pageNo,
+                                       @Min(10) @RequestParam(defaultValue = "20", required = false) int pageSize,
+                                       @RequestParam(required = false) String sortBy) {
+        log.info("Request get all of users");
+        return new ResponseData<>(HttpStatus.OK.value(), "users", userService.getAllUsersWithSortBy(pageNo, pageSize, sortBy));
     }
 
-    //    @GetMapping
-    //    public ResponseSuccess getAllUsers(@RequestParam(defaultValue = "0") int pageNo,
-    //                                                          @RequestParam(defaultValue = "10") int
-    // pageSize,
-    //                                                          @RequestParam(required = false) String
-    // email) {
-    //        return new ResponseSuccess(HttpStatus.OK, "user detail", null);
-    //    }
+    @Operation(summary = "Get list of users with sort by multiple columns", description = "Send a request via this API to get user list by pageNo, pageSize and sort by multiple column")
+    @GetMapping("/list-with-sort-by-multiple-columns")
+    public ResponseData<?> getAllUsersWithSortByMultipleColumns(@RequestParam(defaultValue = "0", required = false) int pageNo,
+                                                                @RequestParam(defaultValue = "20", required = false) int pageSize,
+                                                                @RequestParam(required = false) String... sorts) {
+        log.info("Request get all of users with sort by multiple columns");
+        return new ResponseData<>(HttpStatus.OK.value(), "users", userService.getAllUsersWithSortByMultipleColumns(pageNo, pageSize, sorts));
+    }
+
 }

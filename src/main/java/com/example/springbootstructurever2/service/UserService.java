@@ -1,6 +1,7 @@
 package com.example.springbootstructurever2.service;
 
 import com.example.springbootstructurever2.dto.request.UserRequestDTO;
+import com.example.springbootstructurever2.dto.response.PageResponse;
 import com.example.springbootstructurever2.dto.response.UserDetailResponse;
 import com.example.springbootstructurever2.enums.UserStatus;
 
@@ -18,5 +19,7 @@ public interface UserService {
 
     UserDetailResponse getUser(long userId);
 
-    List<UserDetailResponse> getAllUsers(int pageNo, int pageSize);
+    PageResponse<?> getAllUsersWithSortBy(int pageNo, int pageSize, String sortBy);
+
+    PageResponse<?> getAllUsersWithSortByMultipleColumns(int pageNo, int pageSize, String... sorts);
 }
