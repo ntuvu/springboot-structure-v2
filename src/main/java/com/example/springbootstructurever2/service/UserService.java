@@ -1,8 +1,22 @@
 package com.example.springbootstructurever2.service;
 
 import com.example.springbootstructurever2.dto.request.UserRequestDTO;
+import com.example.springbootstructurever2.dto.response.UserDetailResponse;
+import com.example.springbootstructurever2.enums.UserStatus;
+
+import java.util.List;
 
 public interface UserService {
 
-    int addUser(UserRequestDTO request);
+    long saveUser(UserRequestDTO request);
+
+    void updateUser(long userId, UserRequestDTO request);
+
+    void changeStatus(long userId, UserStatus status);
+
+    void deleteUser(long userId);
+
+    UserDetailResponse getUser(long userId);
+
+    List<UserDetailResponse> getAllUsers(int pageNo, int pageSize);
 }

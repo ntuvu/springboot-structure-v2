@@ -8,10 +8,7 @@ import com.example.springbootstructurever2.validator.EnumValue;
 import com.example.springbootstructurever2.validator.GenderSubset;
 import com.example.springbootstructurever2.validator.PhoneNumber;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -21,55 +18,53 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-@Getter
+import static com.example.springbootstructurever2.enums.Gender.*;
+
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@Getter
 public class UserRequestDTO implements Serializable {
 
-    @NotEmpty(message = "firstName must be not blank")
-    String firstName;
+    @NotBlank(message = "firstName must be not blank") // Khong cho phep gia tri blank
+    private String firstName;
 
-    @NotNull(message = "lastName must be not null")
-    String lastName;
+    @NotNull(message = "lastName must be not null") // Khong cho phep gia tri null
+    private String lastName;
 
-    @PhoneNumber
-    String phone;
+    @Email(message = "email invalid format") // Chi chap nhan nhung gia tri dung dinh dang email
+    private String email;
 
-    @Email(message = "email not valid")
-    String email;
+    //@Pattern(regexp = "^\\d{10}$", message = "phone invalid format")
+    @PhoneNumber(message = "phone invalid format")
+    private String phone;
 
-    @NotNull(message = "dob must be not null")
+    @NotNull(message = "dateOfBirth must be not null")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     @JsonFormat(pattern = "MM/dd/yyyy")
-    Date dob;
+    private Date dateOfBirth;
+
+    //@Pattern(regexp = "^male|female|other$", message = "gender must be one in {male, female, other}")
+    @GenderSubset(anyOf = {MALE, FEMALE, OTHER})
+    private Gender gender;
+
+    @NotNull(message = "username must be not null")
+    private String username;
+
+    private String password;
+
+    @NotNull(message = "type must be not null")
+    @EnumValue(name = "type", enumClass = UserType.class)
+    private String type;
 
     @NotEmpty(message = "addresses can not empty")
-    private Set<Address> addresses;
+    private Set<AddressDTO> addresses;
 
     @EnumPattern(name = "status", regexp = "ACTIVE|INACTIVE|NONE")
-    UserStatus status;
+    private UserStatus status;
 
-    @GenderSubset(anyOf = {Gender.MALE, Gender.FEMALE, Gender.OTHER})
-    Gender gender;
-
-    @EnumValue(name = "type", enumClass = UserType.class)
-    String type;
-
-    @Getter
-    @Setter
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @FieldDefaults(level = AccessLevel.PRIVATE)
-    public static class Address {
-        String apartmentNumber;
-        String floor;
-        String building;
-        String streetNumber;
-        String street;
-        String city;
-        String country;
-        Integer addressType;
+    public UserRequestDTO(String firstName, String lastName, String email, String phone) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.phone = phone;
     }
 }
