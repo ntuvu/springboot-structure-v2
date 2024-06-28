@@ -114,4 +114,24 @@ public class UserController {
         return new ResponseData<>(HttpStatus.OK.value(), "users", userService.getAllUsersWithSortByMultipleColumns(pageNo, pageSize, sorts));
     }
 
+    @Operation(summary = "Get list of users with sort by columns and search", description = "Send a request via this API to get user list by pageNo, pageSize and sort by multiple column")
+    @GetMapping("/list-with-sort-by-columns-and-search")
+    public ResponseData<?> getAllUsersWithSortByColumnsAndSearch(@RequestParam(defaultValue = "0", required = false) int pageNo,
+                                                                @RequestParam(defaultValue = "20", required = false) int pageSize,
+                                                                @RequestParam(required = false) String search,
+                                                                @RequestParam(required = false) String sorts) {
+        log.info("Request get all of users with sort by columns and search");
+        return new ResponseData<>(HttpStatus.OK.value(), "users", userService.getAllUsersWithSortByColumnsAndSearch(pageNo, pageSize, search, sorts));
+    }
+
+    @Operation(summary = "Get list of users with criteria", description = "Send a request via this API to get user list by pageNo, pageSize and sort by multiple column")
+    @GetMapping("/advance-search-by-criteria")
+    public ResponseData<?> getUsersWithCriteria(@RequestParam(defaultValue = "0", required = false) int pageNo,
+                                                @RequestParam(defaultValue = "20", required = false) int pageSize,
+                                                @RequestParam(required = false) String sort,
+                                                @RequestParam(required = false) String address,
+                                                @RequestParam(required = false) String... search) {
+        log.info("Request get all of users with criteria");
+        return new ResponseData<>(HttpStatus.OK.value(), "users", userService.getUsersWithCriteria(pageNo, pageSize, sort, address, search));
+    }
 }

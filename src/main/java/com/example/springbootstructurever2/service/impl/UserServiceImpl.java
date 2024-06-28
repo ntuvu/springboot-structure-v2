@@ -9,9 +9,9 @@ import com.example.springbootstructurever2.enums.UserType;
 import com.example.springbootstructurever2.exception.ResourceNotFoundException;
 import com.example.springbootstructurever2.model.Address;
 import com.example.springbootstructurever2.model.User;
+import com.example.springbootstructurever2.repository.SearchRepository;
 import com.example.springbootstructurever2.repository.UserRepository;
 import com.example.springbootstructurever2.service.UserService;
-import com.example.springbootstructurever2.util.AppConst;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -36,6 +36,7 @@ import static com.example.springbootstructurever2.util.AppConst.SORT_BY;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final SearchRepository searchRepository;
 
     @Override
     public long saveUser(UserRequestDTO request) {
@@ -180,6 +181,16 @@ public class UserServiceImpl implements UserService {
         return this.convertToPageResponse(users, pageable);
     }
 
+    @Override
+    public PageResponse<?> getAllUsersWithSortByColumnsAndSearch(int pageNo, int pageSize, String search, String sort) {
+        return searchRepository.getAllUsersWithSortByColumnsAndSearch(pageNo, pageSize, search, sort);
+    }
+
+    @Override
+    public PageResponse<?> getUsersWithCriteria(int pageNo, int pageSize, String sort, String address, String... search) {
+        return searchRepository.getUsersWithCriteria(pageNo, pageSize, sort, address, search);
+    }
+
     /**
      * Get user by ID
      *
@@ -232,7 +243,7 @@ public class UserServiceImpl implements UserService {
         return PageResponse.builder()
                 .page(pageable.getPageNumber() + 1)
                 .size(pageable.getPageSize())
-                .total(users.getTotalPages())
+                .totalElement(users.getTotalPages())
                 .items(response)
                 .build();
     }

@@ -18,7 +18,8 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity(name = "tbl_user")
+@Entity
+@Table(name = "tbl_user")
 public class User extends AbstractEntity {
 
     @Column(name = "first_name")
@@ -58,6 +59,7 @@ public class User extends AbstractEntity {
     @Column(name = "status")
     private UserStatus status;
 
+    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "user")
     private Set<Address> addresses = new HashSet<>();
 

@@ -10,6 +10,7 @@ import java.io.Serializable;
 public class PageResponse<T> implements Serializable {
     private int page;
     private int size;
-    private long total;
+    private long totalElement;
+    private int totalPage;
     private T items;
 }
